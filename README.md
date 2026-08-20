@@ -281,8 +281,8 @@ request/response shape, and example payload across all six modules
 
 ## Deployed URLs
 
-- **Backend (this repo):** `https://<your-render-url>.onrender.com`
-- **Frontend:** `https://<your-vercel-url>.vercel.app`
+- **Backend (this repo):** `https://dataroom-backend-xsw9.onrender.com`
+- **Frontend:** `https://dataroom-frontend-psi.vercel.app`
 - **Frontend repo:** `https://github.com/RoksolanaMarusiak1/dataroom-frontend`
 
 ---
