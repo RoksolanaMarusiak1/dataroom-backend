@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  // Prisma 7's new "prisma-client" generator defaults to ESM output.
+  // CJS matches NestJS's CommonJS build — without this, Node throws
+  // "exports is not defined" trying to load the client as ESM.
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  fullName     String
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  ownedRooms DataRoom[]
+  shares     Share[]
+}
+
+model DataRoom {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  createdAt DateTime @default(now())
+
+  folders Folder[]
+  files   File[]
+  shares  Share[]
+}
+
+model Folder {
+  id         String    @id @default(uuid())
+  name       String
+  dataRoomId String
+  dataRoom   DataRoom  @relation(fields: [dataRoomId], references: [id], onDelete: Cascade)
+  parentId   String?
+  parent     Folder?   @relation("FolderToFolder", fields: [parentId], references: [id], onDelete: Cascade)
+  children   Folder[]  @relation("FolderToFolder")
+  files      File[]
+  shares     Share[]
+  createdAt  DateTime  @default(now())
+
+  @@index([dataRoomId, parentId])
+}
+
+model File {
+  id         String   @id @default(uuid())
+  name       String
+  size       Int
+  storageKey String
+  folderId   String?
+  folder     Folder?  @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  dataRoomId String
+  dataRoom   DataRoom @relation(fields: [dataRoomId], references: [id], onDelete: Cascade)
+  shares     Share[]
+  createdAt  DateTime @default(now())
+
+  @@index([folderId])
+  @@unique([folderId, name])
+}
+
+enum ShareRole {
+  VIEWER
+}
+
+enum ShareTarget {
+  ROOM
+  FOLDER
+  FILE
+}
+
+model Share {
+  id          String      @id @default(uuid())
+  targetType  ShareTarget
+  role        ShareRole   @default(VIEWER)
+
+  dataRoomId  String?
+  dataRoom    DataRoom?   @relation(fields: [dataRoomId], references: [id], onDelete: Cascade)
+  folderId    String?
+  folder      Folder?     @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  fileId      String?
+  file        File?       @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id])
+  publicToken String?     @unique
+
+  createdAt   DateTime    @default(now())
+
+  @@index([userId])
+  @@index([publicToken])
+}
